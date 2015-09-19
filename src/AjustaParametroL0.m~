@@ -1,0 +1,69 @@
+% Image content metric example using SKR denoising filter
+% The test image suffers from real noise
+% written by Xiang Zhu and Hiroyuki Takeda.
+
+%% initialization
+y = double(imread('JFKgray.bmp'));
+[N,M] = size(y);
+
+h = 0.5;    % the global smoothing parameter
+r = 1;      % the upscaling factor
+ksize = 5;  % the kernel size
+[zc, zx1c, zx2c] = ckr2_regular(y, h, r, ksize);
+
+% iteartive steering kernel regression (second order)
+IT = 20;     % the total number of iterations
+wsize = 11;  % the size of the local orientation analysis window
+lambda = 1;  % the regularization for the elongation parameter
+alpha = 0.5; % the structure sensitive parameter
+h = 2.0;     % the global smoothing parameter
+ksize = 21;  % the kernel size
+z = zeros(N, M, IT+1);
+zx1 = zeros(N, M, IT+1);
+zx2 = zeros(N, M, IT+1);
+z(:,:,1) = y;
+zx1(:,:,1) = zx1c;
+zx2(:,:,1) = zx2c;
+
+% metric Q parameter
+Psize = 8;  % patch size
+% estimate the anisotropic patch set from the input noisy image
+AnisoSet = AnisoSetEst(y, Psize);
+Q = zeros(1, IT);
+
+%% main loop
+
+for i = 2 : IT+1
+    disp(['iteration ' num2str(i-1)])
+    % compute steering matrix
+    C = steering(zx1(:,:,i-1), zx2(:,:,i-1), ones(size(y)), wsize, lambda, alpha);
+    
+    % steering kernel regression
+    [zs, zx1s, zx2s] = skr2_regular(z(:,:,i-1), h, C, r, ksize);
+    
+    z(:,:,i) = zs;
+    zx1(:,:,i) = zx1s;
+    zx2(:,:,i) = zx2s;
+
+    % Q
+    Q_tmp = MetricQ(zs, Psize, AnisoSet);
+    Q(i-1) = Q_tmp;
+    
+    if i == 2
+        Q_max = Q_tmp;
+        z_mQ = zs;
+        itr_mQ = i-1;
+    elseif Q_tmp > Q_max
+        Q_max = Q_tmp;
+        z_mQ = zs;
+        itr_mQ = i-1;
+    end
+end
+
+%% show results
+figure;plot(1:IT, Q, 'bo-');
+xlabel('Iteration number');
+ylabel('Q');
+
+figure;imshow(uint8(z_mQ));
+title(['Metric Q optimized output image, iteration number: ' num2str(itr_mQ)]);
