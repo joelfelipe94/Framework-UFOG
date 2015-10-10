@@ -2,6 +2,17 @@
 
 ColorConstancy::ColorConstancy()
 {
+    method =2;
+
+}
+ColorConstancy::ColorConstancy(int input)
+{
+    method = input;
+}
+
+void ColorConstancy::setDCP(Mat dcp)
+{
+    dcpPrior = dcp;
 }
 
 Vec3f ColorConstancy::shadesOfGray(Mat image, int mikownsky)
@@ -43,9 +54,89 @@ Vec3f ColorConstancy::shadesOfGray(Mat image, int mikownsky)
     return source;
 
 }
+Vec3f ColorConstancy::DCPveil(Mat image, Mat dcpImage)
+{
+
+    Mat dst;
+
+
+
+    dcpImage = dcpImage.reshape(0,1);
+
+
+
+    sortIdx(dcpImage, dst, CV_SORT_EVERY_ROW + CV_SORT_ASCENDING);
+    float maxValue = 0;
+    vector<Mat> channels;
+    split(image,channels);
+    Vec3f veil;
+
+    //cout << dst.rows  << " " << dst.cols << endl;
+    //cout << " chnnels" << image.channels() << " " << endl;
+    channels[0] = channels[0].reshape(0,1);
+    channels[1] = channels[1].reshape(0,1);
+    channels[2] = channels[2].reshape(0,1);
+
+
+    //cout << channels[0].rows  << " " << channels[0].cols << endl;
+    /// Take the 10% smaller
+    for (int i=0;i<int((image.rows*image.cols)/10);i++){
+        float intensity = 0.0;
+
+
+        intensity = intensity + channels[0].at<float>(0,dst.at<int>(0,i));
+        intensity = intensity +channels[1].at<float>(0,dst.at<int>(0,i));
+        intensity = intensity +channels[2].at<float>(0,dst.at<int>(0,i));
+
+
+        if (maxValue < intensity){
+            veil[0] = channels[0].at<float>(0,dst.at<int>(0,i));
+
+            veil[1] = channels[1].at<float>(0,dst.at<int>(0,i));
+
+            veil[2] = channels[2].at<float>(0,dst.at<int>(0,i));
+            maxValue = intensity;
+        }
+
+    }
+
+        return veil;
+
+
+}
 
 Vec3f ColorConstancy::getLightSource(Mat image)
 {
 
-    return shadesOfGray(image,6);
+    switch(method){
+
+        case 1:
+        /// Selected max RGB
+           return shadesOfGray(image,1000);
+        break;
+        case 2:
+        /// Selected shades of Gray
+          return shadesOfGray(image,6);
+
+        break;
+
+        case 3:
+        /// Selected DCP prior;
+        ///
+            if (dcpPrior.isContinuous()){
+            return DCPveil(image,dcpPrior);
+    }
+            else{
+                cout << " ERRROR " << endl;
+                return Vec3f();
+            }
+
+        break;
+
+
+    default:
+
+        break;
+
+    }
 }
