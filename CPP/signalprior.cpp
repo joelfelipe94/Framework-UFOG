@@ -4,7 +4,46 @@ SignalPrior::SignalPrior()
 {
 }
 
-double SignalPrior::prior(Mat tile,Vec3d veil)
+double SignalPrior::priorBinf(Mat tile,Vec3f veil)
+{
+    double minVal;
+    double maxValR;
+    double maxValG;
+    double maxValB;
+    Point minLoc;
+    Point maxLoc;
+    vector<Mat> channels;
+    double priorValue;
+
+
+    split(tile,channels);
+
+
+
+
+    channels[0] = abs((veil[0] - channels[0])/veil[0]);
+    channels[1] = abs((veil[1] - channels[1])/veil[1]);
+    channels[2] = abs((veil[2] - channels[2])/veil[2]);
+
+      // cout << channels[0] << endl;
+
+
+    minMaxLoc( channels[0], &minVal, &maxValR, &minLoc, &maxLoc );
+    minMaxLoc( channels[1], &minVal, &maxValG, &minLoc, &maxLoc );
+    minMaxLoc( channels[2], &minVal, &maxValB, &minLoc, &maxLoc );
+    //cout << maxValR << " " << maxValG << " " << maxValB << endl;
+
+    priorValue =double((MAX(maxValR,maxValG))/MAX(abs(1-MIN(MIN(veil[0],veil[1]),veil[2])),abs(MAX(MAX(veil[0],veil[1]),veil[2]))));
+
+
+
+    return priorValue;
+
+
+
+}
+
+double SignalPrior::prior(Mat tile,Vec3f veil)
 {
     double minVal;
     double maxValR;
@@ -37,16 +76,14 @@ double SignalPrior::prior(Mat tile,Vec3d veil)
 
 
 
-    return 1-priorValue;
+    return priorValue;
 
 
 
 }
 
 
-
-
-Mat SignalPrior::computePrior(Mat image, int patchsize , Vec3d veil)
+Mat SignalPrior::computePrior(Mat image, int patchsize , Vec3f veil)
 {
 
 
@@ -100,6 +137,13 @@ Mat SignalPrior::computePrior(Mat image, int patchsize , Vec3d veil)
     return transmission;
 }
 
+
+Mat SignalPrior::computeTransmission(Mat image, int patchsize , Vec3f veil){
+
+    /// For the case of signal prior , this is exactly the same.
+    return computePrior( image,  patchsize ,  veil);
+
+}
 
 /*
 SignalPrior::obtainTransmission(Mat image, int scale){
