@@ -136,7 +136,28 @@ Mat SignalPrior::computePrior(Mat image, int patchsize , Vec3f veil)
 
     return transmission;
 }
+Mat SignalPrior::signalPrior(Mat image, int patchsize,Vec3f veil)
+{
+    StandardDeviation std;
 
+    Mat charimage = image*255;
+    charimage.convertTo(charimage,CV_8U);
+
+    Mat deviation = std.computePrior(charimage,patchsize);
+    /// Change this prior to a general one
+
+    Mat chromatic = computePrior(image,patchsize,veil);
+
+
+    //cout << deviation << endl;
+
+    deviation.convertTo(deviation,CV_64F);
+    deviation = deviation/255;
+
+    return max(deviation,chromatic);
+
+
+}
 
 Mat SignalPrior::computeTransmission(Mat image, int patchsize , Vec3f veil){
 

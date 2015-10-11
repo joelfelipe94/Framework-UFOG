@@ -6,6 +6,7 @@
 #include <cv.h>
 #include <dirent.h>
 
+#include <fstream>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -20,6 +21,8 @@ void fft(Mat I, Mat & amp, Mat & phase);
 
 Mat  computeHistogram(Mat image);
 void drawHist(Mat hist);
+
+void writeMatToFile(cv::Mat& m, const char* filename);
 
 
 #define rowPtr(imagePtr, dataType, lineIndex) \

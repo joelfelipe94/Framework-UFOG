@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     darkchannelprior.cpp \
     colorconstancy.cpp \
     standartDeviation.cpp \
-    restoration.cpp
+    restoration.cpp \
+    chromaticprior.cpp
 
 HEADERS += \
     filter.h \
@@ -22,7 +23,8 @@ HEADERS += \
     colorconstancy.h \
     standartDeviation.h \
     bilateralfilter.h \
-    restoration.h
+    restoration.h \
+    chromaticprior.h
 
 INCLUDEPATH += /usr/local/include/opencv
 

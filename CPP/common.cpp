@@ -18,6 +18,30 @@
 #define rowPtr(imagePtr, dataType, lineIndex) \
         (dataType *)(imagePtr->imageData + (lineIndex) * imagePtr->widthStep)
 
+
+
+void writeMatToFile(cv::Mat& m, const char* filename)
+{
+    ofstream fout(filename);
+
+    if(!fout)
+    {
+        cout<<"File Not Opened"<<endl;  return;
+    }
+
+    for(int i=0; i<m.rows; i++)
+    {
+        for(int j=0; j<m.cols; j++)
+        {
+            fout<<m.at<float>(i,j)<<"\t";
+        }
+        fout<<endl;
+    }
+
+    fout.close();
+}
+
+
 void fft(Mat I, Mat & amp, Mat & phase){
     //BORDER_CONSTANT
     // Mat is already a grayscale image ready to reaceive a dft transfomation

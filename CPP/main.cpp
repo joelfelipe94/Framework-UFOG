@@ -34,7 +34,7 @@ ColorConstancy cp;
 
 const double sigmaColor = 100.0;
     const double sigmaSpace = 10.0;
-    cvtColor(image, image, CV_RGB2Lab);
+    cvtColor(image, image, CV_BGR2Lab);
     vector<Mat> channels;
 split(image,channels);
 cv_extend::bilateralFilter(channels[0], channels[0], sigmaColor, sigmaSpace);
@@ -44,7 +44,7 @@ cvtColor(image, image, CV_Lab2RGB);
 Vec3f veil = cp.getLightSource(image);
 cout << veil << endl;
 cv::resize(image,image,Size(),0.5,0.5);
-Mat transmission = sp.computePrior(image,15,veil);
+Mat transmission = sp.signalPrior(image,15,veil);
 
 
 cout << " the end " << endl;
@@ -101,6 +101,11 @@ transmission = transmission*255;
 transmission.convertTo(transmission,CV_8U);
 imwrite("trans.png",transmission);
 return  computeHistogram(transmission);
+
+
+
+
+
 
 //cout << hist << endl;
 
@@ -171,12 +176,12 @@ Mat restoreSP(char * imageName){
     //cout << image << endl;
 
 
-    L0smoothing filter;
+
     SignalPrior sp;
 
     //image = filter.doFilter(image);
     //Mat imageR,imageG,imageB;
-    ColorConstancy cp;
+    ColorConstancy cp(2);
 
 
     const double sigmaColor = 100.0;
@@ -215,7 +220,7 @@ Mat restoreSP(char * imageName){
 
 
     Restoration restore;
-    return restore.restoreImageClassic(image, transmission,  veil);
+    return restore.restoreImageVeil(image, transmission,  veil);
 
 
     //cout << hist << endl;
@@ -246,24 +251,30 @@ Mat restoreDCP(char * imageName){
 
     //image = filter.doFilter(image);
     //Mat imageR,imageG,imageB;
-    ColorConstancy cp;
+    ColorConstancy cp(3);
 
 
     const double sigmaColor = 100.0;
         const double sigmaSpace = 10.0;
-        cvtColor(image, image, CV_RGB2Lab);
+        cvtColor(image, image_out, CV_BGR2Lab);
         vector<Mat> channels;
-    split(image,channels);
+    split(image_out,channels);
     cv_extend::bilateralFilter(channels[0], channels[0], sigmaColor, sigmaSpace);
 
-    merge(channels,image);
-    cvtColor(image, image, CV_Lab2RGB);
+    merge(channels,image_out);
+    cvtColor(image_out, image_out, CV_Lab2RGB);
+     cvtColor(image, image, CV_BGR2RGB);
+
+
+    cp.setDCP(sp.computePrior(image,7));
     Vec3f veil = cp.getLightSource(image);
     cout << veil << endl;
     //cv::resize(image,image,Size(),0.5,0.5);
     Mat transmission = sp.computeTransmission(image,7,veil);
 
     transmission.convertTo(transmission,CV_32F);
+
+
 
 
     cout << " the end " << endl;
@@ -303,7 +314,7 @@ int runDataset(char * datasetPath)
     dirent * dp;
     dp = readdir(dirp);
     dp = readdir(dirp);
-    int N =500;
+    int N =20;
     int count = 0;
     Mat averageHist = Mat::zeros(256,1,CV_32F);
     Mat hist;
@@ -314,7 +325,7 @@ int runDataset(char * datasetPath)
         cout << count << endl;
         char fullPath[256];
         sprintf(fullPath,"%s/%s",datasetPath,dp->d_name);
-        hist = getHistSP(fullPath);
+        hist = getHistDCP(fullPath);
         cout << averageHist.rows << " " << hist.rows << endl;
         cout << hist.type() << endl;
         averageHist =  hist + averageHist;
@@ -324,7 +335,11 @@ int runDataset(char * datasetPath)
    }
     averageHist = averageHist/N;
     cout << averageHist << endl;
+    writeMatToFile(averageHist,"hist.txt");
     drawHist(averageHist);
+
+
+
 
 
     return 0;
@@ -345,19 +360,19 @@ int main(int argc, char* argv[])
        printf("Usage: %s image annotations output\n", argv[0] );
        return 1;
     }
-    Mat hist;
+    //Mat hist;
     //hist = runDataset(argv[1]);
     //imwrite("hist.png",hist);
 
-    hist = getHistSTD(argv[1]);
+    //hist = getHistSTD(argv[1]);
 
-//    Mat final;
-//    final = restoreSP(argv[1]);
-//    //cout << final << endl;
-//    final = final*255;
-//    final.convertTo(final,CV_8UC3);
-//    cvtColor(final,final,CV_RGB2BGR);
-//    imwrite("rest.png",final);
+    Mat final;
+    final = restoreDCP(argv[1]);
+    //cout << final << endl;
+    final = final*255;
+    final.convertTo(final,CV_8UC3);
+    cvtColor(final,final,CV_RGB2BGR);
+    imwrite("rest.png",final);
     //hist = getHistSP(argv[1]);
 
 
