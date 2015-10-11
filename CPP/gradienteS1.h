@@ -31,7 +31,7 @@ static double PYTHAG(double a, double b)
 *	transformação ortogonal esquerda e direita e d é uma
 *	matriz diagonal de valores singulares
 */
-int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
+int dsvd(double a[][2], int m, int n, double w[2], double v[][2])
 {
     int flag, i, its, j, jj, k, l, nm;
     double c, f, h, s, x, y, z;
@@ -61,13 +61,13 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
             {
                 for (k = i; k < m; k++)
                 {
-                    a[k][i] = (float)((double)a[k][i]/scale);    //aplica normalização
+                    a[k][i] = (double)((double)a[k][i]/scale);    //aplica normalização
                     s += ((double)a[k][i] * (double)a[k][i]);    //quadrado do valor singular
                 }
                 f = (double)a[i][i];
                 g = -SIGN(sqrt(s), f);
                 h = f * g - s;
-                a[i][i] = (float)(f - g);
+                a[i][i] = (double)(f - g);
                 if (i != n - 1)
                 {
                     for (j = l; j < n; j++)
@@ -76,14 +76,14 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                             s += ((double)a[k][i] * (double)a[k][j]);
                         f = s / h;
                         for (k = i; k < m; k++)
-                            a[k][j] += (float)(f * (double)a[k][i]);
+                            a[k][j] += (double)(f * (double)a[k][i]);
                     }
                 }
                 for (k = i; k < m; k++)
-                    a[k][i] = (float)((double)a[k][i]*scale);
+                    a[k][i] = (double)((double)a[k][i]*scale);
             }
         }
-        w[i] = (float)(scale * g);
+        w[i] = (double)(scale * g);
 
         /* reducao pela direita */
         g = s = scale = 0.0;
@@ -95,13 +95,13 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
             {
                 for (k = l; k < n; k++)
                 {
-                    a[i][k] = (float)((double)a[i][k]/scale);
+                    a[i][k] = (double)((double)a[i][k]/scale);
                     s += ((double)a[i][k] * (double)a[i][k]);
                 }
                 f = (double)a[i][l];
                 g = -SIGN(sqrt(s), f);
                 h = f * g - s;
-                a[i][l] = (float)(f - g);
+                a[i][l] = (double)(f - g);
                 for (k = l; k < n; k++)
                     rv1[k] = (double)a[i][k] / h;
                 if (i != m - 1)
@@ -111,11 +111,11 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                         for (s = 0.0, k = l; k < n; k++)
                             s += ((double)a[j][k] * (double)a[i][k]);
                         for (k = l; k < n; k++)
-                            a[j][k] += (float)(s * rv1[k]);
+                            a[j][k] += (double)(s * rv1[k]);
                     }
                 }
                 for (k = l; k < n; k++)
-                    a[i][k] = (float)((double)a[i][k]*scale);
+                    a[i][k] = (double)((double)a[i][k]*scale);
             }
         }
         anorm = MAX(anorm, (fabs((double)w[i]) + fabs(rv1[i])));
@@ -129,14 +129,14 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
             if (g)
             {
                 for (j = l; j < n; j++)
-                    v[j][i] = (float)(((double)a[i][j] / (double)a[i][l]) / g);
+                    v[j][i] = (double)(((double)a[i][j] / (double)a[i][l]) / g);
                 /* double division to avoid underflow */
                 for (j = l; j < n; j++)
                 {
                     for (s = 0.0, k = l; k < n; k++)
                         s += ((double)a[i][k] * (double)v[k][j]);
                     for (k = l; k < n; k++)
-                        v[k][j] += (float)(s * (double)v[k][i]);
+                        v[k][j] += (double)(s * (double)v[k][i]);
                 }
             }
             for (j = l; j < n; j++)
@@ -166,11 +166,11 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                         s += ((double)a[k][i] * (double)a[k][j]);
                     f = (s / (double)a[i][i]) * g;
                     for (k = i; k < m; k++)
-                        a[k][j] += (float)(f * (double)a[k][i]);
+                        a[k][j] += (double)(f * (double)a[k][i]);
                 }
             }
             for (j = i; j < m; j++)
-                a[j][i] = (float)((double)a[j][i]*g);
+                a[j][i] = (double)((double)a[j][i]*g);
         }
         else
         {
@@ -208,7 +208,7 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                     {
                         g = (double)w[i];
                         h = PYTHAG(f, g);
-                        w[i] = (float)h;
+                        w[i] = (double)h;
                         h = 1.0 / h;
                         c = g * h;
                         s = (- f * h);
@@ -216,8 +216,8 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                         {
                             y = (double)a[j][nm];
                             z = (double)a[j][i];
-                            a[j][nm] = (float)(y * c + z * s);
-                            a[j][i] = (float)(z * c - y * s);
+                            a[j][nm] = (double)(y * c + z * s);
+                            a[j][i] = (double)(z * c - y * s);
                         }
                     }
                 }
@@ -227,7 +227,7 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
             {                  /* convergence */
                 if (z < 0.0)
                 {              /* make singular value nonnegative */
-                    w[k] = (float)(-z);
+                    w[k] = (double)(-z);
                     for (j = 0; j < n; j++)
                         v[j][k] = (-v[j][k]);
                 }
@@ -270,11 +270,11 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                 {
                     x = (double)v[jj][j];
                     z = (double)v[jj][i];
-                    v[jj][j] = (float)(x * c + z * s);
-                    v[jj][i] = (float)(z * c - x * s);
+                    v[jj][j] = (double)(x * c + z * s);
+                    v[jj][i] = (double)(z * c - x * s);
                 }
                 z = PYTHAG(f, h);
-                w[j] = (float)z;
+                w[j] = (double)z;
                 if (z)
                 {
                     z = 1.0 / z;
@@ -287,13 +287,13 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
                 {
                     y = (double)a[jj][j];
                     z = (double)a[jj][i];
-                    a[jj][j] = (float)(y * c + z * s);
-                    a[jj][i] = (float)(z * c - y * s);
+                    a[jj][j] = (double)(y * c + z * s);
+                    a[jj][i] = (double)(z * c - y * s);
                 }
             }
             rv1[l] = 0.0;
             rv1[k] = f;
-            w[k] = (float)x;
+            w[k] = (double)x;
         }
     }
     free((void*) rv1);
@@ -302,16 +302,15 @@ int dsvd(float a[][2], int m, int n, float w[2], float v[][2])
 
 Mat gradienteS1(Mat imagemOriginal,int p=9){
     Mat imagemOriginal_gray;
-    unsigned char *arrayImagemOriginal= new uchar [imagemOriginal.rows*imagemOriginal.cols];
-    float *arrayImagemDestinoX= new float [imagemOriginal.rows*imagemOriginal.cols];
-    float *arrayImagemDestinoY= new float [imagemOriginal.rows*imagemOriginal.cols];
-    unsigned char *arrayImagemDestino= new uchar [imagemOriginal.rows*imagemOriginal.cols];
+    double *arrayImagemOriginal= new double [imagemOriginal.rows*imagemOriginal.cols];
+    double *arrayImagemDestinoX= new double [imagemOriginal.rows*imagemOriginal.cols];
+    double *arrayImagemDestinoY= new double [imagemOriginal.rows*imagemOriginal.cols];
+    double *arrayImagemDestino= new double [imagemOriginal.rows*imagemOriginal.cols];
     /// Convert it to gray
 
     cvtColor( imagemOriginal, imagemOriginal_gray, CV_RGB2GRAY );
-    imagemOriginal_gray.convertTo(imagemOriginal_gray, CV_8U);
-    arrayImagemOriginal=(unsigned char*)imagemOriginal_gray.data;
-
+    imagemOriginal_gray.convertTo(imagemOriginal_gray, CV_64F);
+    arrayImagemOriginal=( double* )imagemOriginal_gray.data;
     int nCol=imagemOriginal.cols;
     int nRow=imagemOriginal.rows;
      #pragma omp parallel for
@@ -321,7 +320,7 @@ Mat gradienteS1(Mat imagemOriginal,int p=9){
             arrayImagemDestinoY[i*nCol+j] = arrayImagemOriginal[(i)*nCol+j-1]- arrayImagemOriginal[(i)*nCol+j+1];
         }
 
-    float patch[p*p][2],saida[p*p][2],s[3];
+    double patch[p*p][2],saida[p*p][2],s[3];
     int  m=p*p,n=2;
  #pragma omp parallel for private(patch,s,saida)
     for(int i=p/2;i<nRow-p/2;i++){
@@ -339,11 +338,11 @@ Mat gradienteS1(Mat imagemOriginal,int p=9){
                     patch[indicePatch][1]=arrayImagemDestinoY[indiceImagem];
                 }
             dsvd(patch, m, n, s, saida);
-            arrayImagemDestino[i*nCol+j]=(unsigned char) max(s[0],s[1]);
+            arrayImagemDestino[i*nCol+j]=(double) max(s[0],s[1]);
         }
     }
 
-    Mat Resultado (imagemOriginal.rows, imagemOriginal.cols, DataType<unsigned char>::type,arrayImagemDestino);
+    Mat Resultado (imagemOriginal.rows, imagemOriginal.cols,CV_64F,arrayImagemDestino);
     return Resultado;
 }
 
