@@ -2,6 +2,7 @@ TEMPLATE = app
 CONFIG += console
 CONFIG -= qt
 
+
 SOURCES += main.cpp \
     filter.cpp \
     l0smoothing.cpp \
@@ -37,3 +38,4 @@ LIBS += -L/usr/local/lib \
     -lopencv_contrib \
     -lopencv_legacy \
     -lopencv_flann
+
