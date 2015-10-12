@@ -64,3 +64,38 @@ Mat Restoration::restoreImageClassic(Mat Image,Mat transmission, Vec3f Veil)
 
 
 }
+
+Mat Restoration::refineTransmission(Mat Image, Mat transmission)
+{
+
+    // Apply the conversions first.
+    transmission = transmission*255;
+    transmission.convertTo(transmission,CV_8U);
+
+    Image = Image*255;
+    cvtColor(Image, Image, CV_RGB2BGR);
+    Image.convertTo(Image,CV_8UC3);
+     //setNbThreads(omp_get_max_threads());
+
+     Mat img_cv = Image;
+     Mat img_scr_cv = transmission;
+     int img_w=img_cv.cols;
+     int img_h=img_cv.rows;
+     int img_scr_w=img_scr_cv.cols;
+     int img_scr_h=img_scr_cv.rows;
+
+
+     if(img_h!=img_scr_h || img_w!=img_scr_w){
+         printf("As images tem tamanhos diferentes.\n");
+
+     }
+
+     init_vars(img_w, img_h);
+     //while(...){
+
+     Mat alpha_img=solve_alpha(&img_cv, &img_scr_cv);
+     //}
+     free_vars();
+
+     return alpha_img;
+}
