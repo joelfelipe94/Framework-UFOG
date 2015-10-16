@@ -40,7 +40,25 @@ void writeMatToFile(cv::Mat& m, const char* filename)
 
     fout.close();
 }
+Mat fitSize(Mat image,int maxEdgeSize)
+{
+    int sizeX = image.rows;
+    int sizeY = image.cols;
+    double ratio =1;
 
+    if ( sizeX > sizeY){ // check the largest size firs
+
+        if (sizeX > maxEdgeSize)
+          ratio = double(maxEdgeSize)/double(sizeX);
+    }
+    else{
+        if (sizeY > maxEdgeSize)
+            ratio = double(maxEdgeSize)/double(sizeY);
+    }
+
+    cv::resize(image,image,Size(),ratio,ratio);
+    return image;
+}
 
 void fft(Mat I, Mat & amp, Mat & phase){
     //BORDER_CONSTANT
@@ -165,4 +183,10 @@ void drawHist(Mat hist)
 
     imwrite("hist.jpg",histImage);
 
+}
+void writeImage8U(const cv::Mat& image,const char* filename){
+   cv::Mat imageCopy;
+   imageCopy=image*255;
+   imageCopy.convertTo(imageCopy,CV_8U);
+   imwrite(filename,imageCopy);
 }

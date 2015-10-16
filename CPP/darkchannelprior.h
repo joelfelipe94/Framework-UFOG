@@ -7,6 +7,7 @@ public:
     DarkChannelPrior();
     double dcp(Mat tile);
 
+
     Mat computePrior(Mat image, int patchsize);
     Mat computeTransmission(Mat image, int patchsize, Vec3f veil);
 };

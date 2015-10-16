@@ -1,15 +1,15 @@
-#include "darkchannelprior.h"
+#include "dcpgb.h"
 
-DarkChannelPrior::DarkChannelPrior()
+DCPGB::DCPGB()
 {
 }
 
-double DarkChannelPrior::dcp(Mat tile)
+double DCPGB::prior(Mat tile)
 {
-    double minValR;
+
     double minValG;
     double minValB;
-    double maxValR;
+
     double maxValG;
     double maxValB;
     Point minLoc;
@@ -26,13 +26,11 @@ double DarkChannelPrior::dcp(Mat tile)
 
       // cout << channels[0] << endl;
 
-
-    minMaxLoc( channels[0], &minValR, &maxValR, &minLoc, &maxLoc );
     minMaxLoc( channels[1], &minValG, &maxValG, &minLoc, &maxLoc );
     minMaxLoc( channels[2], &minValB, &maxValB, &minLoc, &maxLoc );
     //cout << maxValR << " " << maxValG << " " << maxValB << endl;
 
-    priorValue =MIN(MIN(minValR,minValG),minValB);
+    priorValue =MIN(minValB,minValG);
 
 
     return priorValue;
@@ -41,8 +39,7 @@ double DarkChannelPrior::dcp(Mat tile)
 
 }
 
-
-Mat DarkChannelPrior::computePrior(Mat image, int patchsize)
+Mat DCPGB::computePrior(Mat image, int patchsize)
 {
 
 
@@ -71,7 +68,7 @@ Mat DarkChannelPrior::computePrior(Mat image, int patchsize)
                 //cout << tile.channels() << endl;
                 //cout << i << " " << j << endl;
 
-                double priorValue = dcp(tile);
+                double priorValue = prior(tile);
                 //cout << tile.rows << " " << tile.cols << endl;
                 //cout << i << " " << j << endl;
                 //cout << transmission.rows << " " <<  transmission.cols << endl;
@@ -96,7 +93,7 @@ Mat DarkChannelPrior::computePrior(Mat image, int patchsize)
     return transmission;
 }
 
-Mat DarkChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
+Mat DCPGB::computeTransmission(Mat image, int patchsize, Vec3f veil)
 {
     //[y x ~] = size(I);
     //J = zeros(y, x);
@@ -128,7 +125,7 @@ Mat DarkChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
             tChannels[1] = tChannels[1]/veil[1];
             tChannels[2] = tChannels[2]/veil[2];
             merge(tChannels,tile);
-            double priorValue = 1- dcp(tile);
+            double priorValue = 1- prior(tile);
             //cout << tile.rows << " " << tile.cols << endl;
             //cout << i << " " << j << endl;
             //cout << transmission.rows << " " <<  transmission.cols << endl;
@@ -153,4 +150,3 @@ Mat DarkChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
 return transmission;
 
 }
-
