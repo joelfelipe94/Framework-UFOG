@@ -271,6 +271,60 @@ return  computeHistogram(transmission);
 }
 
 
+Mat getTransCP(char * imageName){
+
+
+// For now we are using just an image after u can put the folder to process.
+
+Mat image;
+
+cout << imageName << endl;
+
+image = imread(imageName, CV_LOAD_IMAGE_COLOR);
+image.convertTo(image, CV_32FC3);
+image = image/255;
+image = fitSize( image,1024);
+//cout << image << endl;
+
+
+ChromaticPrior sp;
+
+//image = filter.doFilter(image);
+//Mat imageR,imageG,imageB;
+ColorConstancy cp(2);
+
+
+const double sigmaColor = 100.0;
+    const double sigmaSpace = 10.0;
+    cvtColor(image, image, CV_BGR2Lab);
+    vector<Mat> channels;
+split(image,channels);
+cv_extend::bilateralFilter(channels[0], channels[0], sigmaColor, sigmaSpace);
+
+merge(channels,image);
+cvtColor(image, image, CV_Lab2RGB);
+Vec3f veil = cp.getLightSource(image);
+cout << veil << endl;
+
+
+Mat transmission = sp.computePrior(image,15,veil);
+transmission = transmission*255;
+
+ //cout << transmission << endl;
+
+transmission.convertTo(transmission,CV_8U);
+
+return transmission;
+
+//cout << hist << endl;
+
+
+
+
+}
+
+
+
 Mat restoreSP(char * imageName){
 
 
@@ -414,6 +468,71 @@ Mat restoreDCP(char * imageName){
 }
 
 
+int runGroundTruthTest(char * imagesPath, char * groundTruth)
+{
+
+
+    DIR * dirp;
+    dirp = opendir(imagesPath);
+    if (dirp == NULL)
+            return (1);
+
+    dirent * dp;
+    dp = readdir(dirp);
+    dp = readdir(dirp);
+    int N =2000;
+    int count = 0;
+
+    Mat trans;
+
+    Mat gt;
+
+
+    gt = imread(groundTruth, CV_LOAD_IMAGE_GRAYSCALE);
+
+
+    Mat diffVec = Mat::zeros(256,1,CV_32F);
+
+
+
+    normalize(gt, gt, 0, 255, NORM_MINMAX, CV_8UC1);
+
+    gt = 255 - gt;
+    int i=0;
+
+    while ((dp = readdir(dirp)) != NULL && count < N) {
+
+
+        cout << dp->d_name << endl;
+        cout << count << endl;
+        char fullPath[256];
+        sprintf(fullPath,"%s/%s",datasetPath,dp->d_name);
+
+
+        trans = getTransCP(fullPath);
+
+        normalize(trans, trans, 0, 255, NORM_MINMAX, CV_8UC1);
+
+        Mat diff = trans - gt;
+        diffVec.at<float>(i) = mean(diff);
+        i++;
+
+   }
+
+
+    writeMatToFile(diffVec,"hist.txt");
+
+
+
+
+
+
+    return 0;
+
+
+
+
+}
 
 int runDataset(char * datasetPath)
 {
