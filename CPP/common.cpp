@@ -60,6 +60,28 @@ Mat fitSize(Mat image,int maxEdgeSize)
     return image;
 }
 
+void writeToColorMap(const Mat& image ,const char* filename)
+{
+    //double min;
+    //double max;
+    //cv::minMaxIdx(image, &min, &max);
+    cv::Mat adjMap;
+    //cout << image << endl;
+    Mat mapImage = image*255;
+    // expand your range to 0..255. Similar to histEq();
+    mapImage.convertTo(adjMap,CV_8U);
+    //cout << adjMap << endl;
+    // this is great. It converts your grayscale image into a tone-mapped one,
+    // much more pleasing for the eye
+    // function is found in contrib module, so include contrib.hpp
+    // and link accordingly
+    cv::Mat falseColorsMap;
+    applyColorMap(adjMap, falseColorsMap, cv::COLORMAP_JET);
+    cout << falseColorsMap << endl;
+    imwrite(filename,falseColorsMap);
+
+}
+
 void fft(Mat I, Mat & amp, Mat & phase){
     //BORDER_CONSTANT
     // Mat is already a grayscale image ready to reaceive a dft transfomation
@@ -190,3 +212,4 @@ void writeImage8U(const cv::Mat& image,const char* filename){
    imageCopy.convertTo(imageCopy,CV_8U);
    imwrite(filename,imageCopy);
 }
+

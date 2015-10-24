@@ -12,7 +12,7 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
     finalchannels.resize(3);
     split(Image,channels);
 
-    transmission = max(transmission,0.25);
+    transmission = max(transmission,0.05);
 
     transmission = min(transmission,0.95);
 
@@ -95,7 +95,11 @@ Mat Restoration::refineTransmission(Mat Image, Mat transmission)
 
      Mat alpha_img=solve_alpha(&img_cv, &img_scr_cv);
      //}
+
+
      free_vars();
+
+
 
      return alpha_img;
 }

@@ -3,15 +3,19 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/contrib/contrib.hpp>
 #include <cv.h>
 #include <dirent.h>
+
+#include <eigen3/Eigen/Sparse>
+
 
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
 #include <omp.h>
-#include <cuda_runtime.h>
+
 
 using namespace cv;
 using namespace std;
@@ -26,6 +30,7 @@ void writeMatToFile(cv::Mat& m, const char* filename);
 Mat fitSize(Mat image,int maxEdgeSize);
 void writeImage8U(const cv::Mat& image,const char* filename);
 
+void writeToColorMap(const Mat& image ,const char* filename);
 // This is the 'elder trick of the...' - Tell the compiler this function is defined in other place
 extern "C"
 Mat solve_alpha(const Mat *img_cv, const Mat *img_scr_cv);

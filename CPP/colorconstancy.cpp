@@ -1,4 +1,6 @@
 #include "colorconstancy.h"
+#include "colorlines.h"
+
 
 ColorConstancy::ColorConstancy()
 {
@@ -14,6 +16,11 @@ void ColorConstancy::setDCP(Mat dcp)
 {
     dcpPrior = dcp;
 }
+void ColorConstancy::setTrans(Mat transmission)
+{
+    trans = transmission;
+}
+
 
 Vec3f ColorConstancy::shadesOfGray(Mat image, int mikownsky)
 {
@@ -54,6 +61,24 @@ Vec3f ColorConstancy::shadesOfGray(Mat image, int mikownsky)
     return source;
 
 }
+
+Vec3f ColorConstancy::colorLines(Mat image)
+{
+
+    ColorLines cl;
+    Vec3f ori = cl.findOrientation(&image);
+    cout << "ori" << endl;
+    cout << ori << endl;
+    double a[3]={ori[0],ori[1],ori[2]};
+
+    double  mag =  cl.findMagnitude(&image,&trans,a);
+    cout << mag << endl;
+
+    return ori*mag;
+
+
+}
+
 Vec3f ColorConstancy::DCPveil(Mat image, Mat dcpImage)
 {
 
@@ -125,11 +150,16 @@ Vec3f ColorConstancy::getLightSource(Mat image)
         ///
             if (dcpPrior.isContinuous()){
             return DCPveil(image,dcpPrior);
-    }
+            }
             else{
                 cout << " ERRROR " << endl;
                 return Vec3f();
             }
+
+        break;
+        case 4:
+
+            return colorLines(image);
 
         break;
 

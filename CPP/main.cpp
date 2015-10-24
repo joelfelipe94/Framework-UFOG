@@ -339,7 +339,7 @@ Mat restoreSP(char * imageName){
         image = imread(imageName, CV_LOAD_IMAGE_COLOR);
         image.convertTo(image, CV_32FC3);
         image = image/255;
-
+        image = fitSize( image,403);
         //cout << image << endl;
 
 
@@ -362,7 +362,7 @@ Mat restoreSP(char * imageName){
         cvtColor(image_out, image_out, CV_Lab2RGB);
          cvtColor(image, image, CV_BGR2RGB);
         Vec3f veil = cp.getLightSource(image);
-        //cout << veil << endl;
+        cout << veil << endl;
         //cv::resize(image,image,Size(),0.5,0.5);
 
         //veil[0] = 95.0/255.0;
@@ -371,21 +371,48 @@ Mat restoreSP(char * imageName){
 
         Mat transmission = sp.computePrior(image_out,image,15,veil);
 
-        transmission.convertTo(transmission,CV_32F);
+      //  ColorConstancy cp_true(4);
+
+        //Mat tImage = transmission*255;
+        //tImage.convertTo(tImage,CV_8U);
+
+        //cp_true.setTrans(tImage);
+
+        //cout << transmission << endl;
+        //image = image *255;
+        //image.convertTo(image, CV_8UC3);
+
+        //veil = cp_true.getLightSource(image);
+
+        //cout << veil << endl;
+
+        //transmission = sp.computePrior(image_out,image,15,veil);
+
+
+
+
         writeImage8U(transmission,strcat(imageName,"Transmission.png"));
+        Restoration restore;
+        transmission = restore.refineTransmission(image,transmission);
+
+
+        transmission.convertTo(transmission,CV_32F);
+        transmission = transmission/255;
+        writeImage8U(transmission,strcat(imageName,"TransmissionFinal.png"));
 
         cout << " the end " << endl;
-        Mat tImage = transmission*255;
-        tImage.convertTo(tImage,CV_8U);
-        imwrite("trans.png",tImage);
+        //Mat tImage = transmission*255;
+        //tImage.convertTo(tImage,CV_8U);
+        //writeImage8U(transmission,strcat(imageName,"TransmissionFinal.png"));
+        //imwrite("trans.png",tImage);
 
          //cout << transmission << endl;
 
         //
-
+        //cout << image << endl;
         cout<<"aqui"<<endl;
-        Restoration restore;
-        return restore.restoreImageVeil(image, transmission,  veil);
+        cvtColor(image, image, CV_BGR2RGB);
+        return restore.restoreImageVeil(image/255, transmission,  veil);
         cout<<"aqui2"<<endl;
 
         //cout << hist << endl;
@@ -409,11 +436,11 @@ Mat restoreDCP(char * imageName){
     image = imread(imageName, CV_LOAD_IMAGE_COLOR);
     image.convertTo(image, CV_32FC3);
     image = image/255;
-
+    //image = fitSize( image,500);
     //cout << image << endl;
 
 
-    DarkChannelPrior sp;
+    DCPGB sp;
 
     //image = filter.doFilter(image);
     //Mat imageR,imageG,imageB;
@@ -432,21 +459,23 @@ Mat restoreDCP(char * imageName){
      cvtColor(image, image, CV_BGR2RGB);
 
 
-    cp.setDCP(sp.computePrior(image,7));
+    cp.setDCP(sp.computePrior(image,15));
     Vec3f veil = cp.getLightSource(image);
     cout << veil << endl;
     //cv::resize(image,image,Size(),0.5,0.5);
-    Mat transmission = sp.computeTransmission(image,7,veil);
+    Mat transmission = sp.computeTransmission(image,15,veil);
 
+
+
+    Restoration restore;
+    //writeImage8U(transmission,strcat(imageName,"TransmissionBefore.png"));
+    //cout << transmission << endl;
+    transmission = restore.refineTransmission(image,transmission);
     transmission.convertTo(transmission,CV_32F);
-
-
-
-
+    transmission = transmission/255;
     cout << " the end " << endl;
-    Mat tImage = transmission*255;
-    tImage.convertTo(tImage,CV_8U);
-    imwrite("trans.png",tImage);
+    writeToColorMap(transmission ,"colorMap.png");
+    writeImage8U(transmission,strcat(imageName,"TransmissionDCP.png"));
 
     //cout << transmission << endl;
     //transmission = transmission;
@@ -457,8 +486,9 @@ Mat restoreDCP(char * imageName){
     //transmission.convertTo(transmission,CV_8U);
 
 
-    Restoration restore;
-    return restore.restoreImageClassic(image, transmission,  veil);
+    //cout << image << endl;
+    cvtColor(image, image, CV_BGR2RGB);
+    return restore.restoreImageClassic(image/255, transmission,  veil);
 
 
     //cout << hist << endl;
@@ -506,7 +536,7 @@ int runGroundTruthTest(char * imagesPath, char * groundTruth)
         cout << dp->d_name << endl;
         cout << count << endl;
         char fullPath[256];
-        sprintf(fullPath,"%s/%s",datasetPath,dp->d_name);
+        sprintf(fullPath,"%s/%s",imagesPath,dp->d_name);
 
 
         trans = getTransCP(fullPath);
@@ -514,7 +544,7 @@ int runGroundTruthTest(char * imagesPath, char * groundTruth)
         normalize(trans, trans, 0, 255, NORM_MINMAX, CV_8UC1);
 
         Mat diff = trans - gt;
-        diffVec.at<float>(i) = mean(diff);
+        diffVec.at<float>(i) = mean(diff)[0];
         i++;
 
    }
@@ -591,21 +621,21 @@ int main(int argc, char* argv[])
        printf("Usage: %s image annotations output\n", argv[0] );
        return 1;
     }
-    Mat hist;
-    hist = runDataset(argv[1]);
+    //int output;
+    //output = runGroundTruthTest(argv[1],argv[2]);
     //imwrite("hist.png",hist);
 
     //hist = getHistSTD(argv[1]);
 
     //ColorLines cl;
     //Vec3f ori = cl.findOrientation();
-//    Mat final;
-//    final = restoreSP(argv[1]);
-//    //cout << final << endl;
-//    final = final*255;
-//    final.convertTo(final,CV_8UC3);
-//    cvtColor(final,final,CV_RGB2BGR);
-//    imwrite("rest.png",final);
+    Mat final;
+    final = restoreSP(argv[1]);
+    //cout << final << endl;
+    final = final*255;
+    final.convertTo(final,CV_8UC3);
+    cvtColor(final,final,CV_RGB2BGR);
+    imwrite("rest.png",final);
     //hist = getHistSP(argv[1]);
 
 

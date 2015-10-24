@@ -1,7 +1,7 @@
 #ifndef RESTORATION_H
 #define RESTORATION_H
 
-#include "common.h"
+#include "softmatting.h"
 
 class Restoration
 {

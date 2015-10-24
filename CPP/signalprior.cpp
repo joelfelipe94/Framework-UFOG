@@ -12,6 +12,7 @@ double SignalPrior::prior(Mat tile,Vec3f veil)
 Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3f veil)
 {
 
+
 //        GradienteS1Prior grad;
         ChromaticPrior chrom;
         RangeFiltPrior range;
@@ -20,6 +21,7 @@ Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3
 //        desvio=stand.computePrior(image,patchsize);
 //        gradiente=grad.computePrior(image,patchsize);
         rangeFilt=range.computePrior(image,patchsize,veil);
+        //blur(rangeFilt,rangeFilt,Size(15,15));
         chromatic = chrom.computePrior(imageBilateral,patchsize,veil);
        // gradiente=guidedFilter(image,gradiente,60,0.01);
  //       writeImage8U(gradiente,"gradiente.png");
@@ -30,6 +32,7 @@ Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3
 
 
         return max(chromatic,rangeFilt);
+        //return chromatic;
 
 }
 
