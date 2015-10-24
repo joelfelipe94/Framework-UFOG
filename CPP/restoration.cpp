@@ -12,7 +12,7 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
     finalchannels.resize(3);
     split(Image,channels);
 
-    transmission = max(transmission,0.05);
+    transmission = max(transmission,0.25);
 
     transmission = min(transmission,0.95);
 
@@ -72,11 +72,15 @@ Mat Restoration::refineTransmission(Mat Image, Mat transmission)
     transmission = transmission*255;
     transmission.convertTo(transmission,CV_8U);
 
+    cvtColor(transmission,transmission,CV_GRAY2BGR);
+
+
+    cout << transmission.channels() << endl;
     Image = Image*255;
     cvtColor(Image, Image, CV_RGB2BGR);
     Image.convertTo(Image,CV_8UC3);
      //setNbThreads(omp_get_max_threads());
-
+    //cout << transmission << endl;
      Mat img_cv = Image;
      Mat img_scr_cv = transmission;
      int img_w=img_cv.cols;

@@ -369,7 +369,7 @@ Mat restoreSP(char * imageName){
         //veil[1] = 170.0/255.0;
         //veil[2] = 127.0/255.0;
 
-        Mat transmission = sp.computePrior(image_out,image,15,veil);
+        Mat transmission = sp.computePrior(image_out,image,7,veil);
 
       //  ColorConstancy cp_true(4);
 
