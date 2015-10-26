@@ -1,53 +1,77 @@
 #include "rangefiltprior.h"
 
-
-
-Mat RangeFiltPrior::computePrior(Mat image, int patchsize,Vec3f veil)
+double RangeFiltPrior::prior(Mat tile,Vec3f veil)
 {
-    vector<Mat> canais;
-    split(image,canais);
-    double *arrayImagem=new double [image.rows*image.cols];
-    double **arraySigma=new double* [3];
-    arraySigma[0] = new double [image.rows*image.cols];
-    arraySigma[1] = new double [image.rows*image.cols];
-    arraySigma[2] = new double [image.rows*image.cols];
-    int linhas=image.rows,colunas=image.cols;
+    double minValR;
+    double minValG;
+    double minValB;
+    double maxValR;
+    double maxValG;
+    double maxValB;
+    Point minLoc;
+    Point maxLoc;
+    vector<Mat> channels;
+    double priorValue;
 
-    for(int k=0;k<3;k++){
-    canais[k].convertTo(image, CV_64F);
-    //unsigned char arraySigma[imagemOriginal.rows+imagemOriginal.cols];
-    image=image/veil[k];
-    if(image.isContinuous()){
-        arrayImagem=(double *) image.data;
+    split(tile,channels);
+    channels[0] = channels[0]/veil[0];
+    channels[1] = channels[1]/veil[1];
+    channels[2] = channels[2]/veil[2];
+    minMaxLoc( channels[0], &minValR, &maxValR, &minLoc, &maxLoc );
+    minMaxLoc( channels[1], &minValG, &maxValG, &minLoc, &maxLoc );
+    minMaxLoc( channels[2], &minValB, &maxValB, &minLoc, &maxLoc );
+    priorValue =double((MAX(MAX(maxValR-minValR,maxValG-minValG),maxValB-minValB)));
+    return priorValue;
 
-    }
 
 
-    #pragma omp parallel for
-    for(int i=patchsize/2;i<linhas-patchsize/2;i++){
-        for(int j=patchsize/2;j<colunas-patchsize/2;j++){
-            double minimo=1,maximo=0;
+}
 
-            for(int ji=-patchsize/2;ji<=patchsize/2;ji++)
-                for(int jj=-patchsize/2;jj<=patchsize/2;jj++){
-                    minimo=min(arrayImagem[(i+ji)*colunas+(j+jj)],minimo);
-                    maximo=max(arrayImagem[(i+ji)*colunas+(j+jj)],maximo);
-                }
-            arraySigma[k][(i)*colunas+(j)]= (maximo-minimo);
+
+Mat RangeFiltPrior::computePrior(Mat image, int patchsize , Vec3f veil)
+{
+     int sizeY = image.rows;
+        int sizeX = image.cols;
+
+        cout << sizeX << endl;
+        cout << sizeY << endl;
+        Mat transmission(sizeY,sizeX,CV_64F);
+
+     cout << image(Range(sizeY-1,sizeY-1),Range(sizeX-1,sizeX-1)) << endl;
+        for(int i=0; i < sizeY;i++){
+            for(int j=0;j < sizeX;j++){
+                //cout << j + patchsize << " " << image.cols << endl;
+
+                Mat tile = image(Range(i, min(i + patchsize, image.rows)), Range(j, min(j + patchsize, image.cols))).clone();
+
+                //Mat tileCopy =transmission(Range(i, min(i + patchsize, transmission.rows)), Range(j, min(j + patchsize, transmission.cols)));
+
+                //cout << tile.channels() << endl;
+                //cout << i << " " << j << endl;
+
+                double priorValue = prior(tile,veil);
+                //cout << tile.rows << " " << tile.cols << endl;
+                //cout << i << " " << j << endl;
+                //cout << transmission.rows << " " <<  transmission.cols << endl;
+                //cout << Rect(i,j, tile.rows ,tile.cols) << endl;
+                 // Yes, the rectangle is inverted with matrix when you access
+               // Mat tileCopy = transmission(Rect(j,i, tile.cols ,tile.rows));
+                transmission.at<double>(i,j) = priorValue;
+                //cout <<  tileCopy.rows << " " << tileCopy.cols << endl;
+                //tileCopy =  Mat( tile.rows,tile.cols, CV_64F, cvScalar(priorValue));
+                //tileCopy.copyTo(transmission(Rect(j,i, tile.cols ,tile.rows)));
+                //cout << "prior" << endl;
+                //cout << priorValue << endl;
+                //cout << transmission.at<double>(i,j) << endl;
+                //cout << priorValue << " ";
+                //tileCopy =
+
+            }
+            //cout << i  << endl;
         }
-    }
 
-    //Mat resultado=Mat(linhas,colunas,CV_8U,arraySigma);
-    }
-    #pragma omp parallel for
-    for(int indice=0;indice<linhas*colunas;indice++){
-            if(arraySigma[0][indice]<arraySigma[1][indice])
-                arraySigma[0][indice]=arraySigma[1][indice];
-            if(arraySigma[0][indice]<arraySigma[2][indice])
-                arraySigma[0][indice]=arraySigma[2][indice];
-    }
-    Mat resultado=Mat(linhas,colunas,CV_64F,arraySigma[0]);
-    return resultado;
+
+    return transmission;
 }
 
 Mat RangeFiltPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
