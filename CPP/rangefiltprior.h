@@ -12,7 +12,7 @@ using namespace std;
 class RangeFiltPrior
 {
 public:
-    double prior(Mat tile);
+    double prior(Mat tile,Vec3f veil);
     Mat computePrior(Mat image, int patchsize, Vec3f veil);
     Mat computeTransmission(Mat image, int patchsize, Vec3f veil);
 };
