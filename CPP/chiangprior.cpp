@@ -1,10 +1,15 @@
-#include "redchannelprior.h"
+#include "chiangprior.h"
+#include "colorconstancy.h"
 
-RedChannelPrior::RedChannelPrior()
+ChiangPrior::ChiangPrior()
 {
+
+    Nrer[0] = 0.97;
+    Nrer[1] = 0.92;
+    Nrer[2] = 0.92;
 }
 
-double RedChannelPrior::prior(Mat tile)
+double ChiangPrior::prior(Mat tile)
 {
     double minValR;
     double minValG;
@@ -12,9 +17,6 @@ double RedChannelPrior::prior(Mat tile)
     double maxValR;
     double maxValG;
     double maxValB;
-    double minValSat;
-    double maxValSat;
-
     Point minLoc;
     Point maxLoc;
     vector<Mat> channels;
@@ -29,21 +31,13 @@ double RedChannelPrior::prior(Mat tile)
 
       // cout << channels[0] << endl;
 
-    // inverse of the red channel
 
-    Mat invR = 1 - channels[0];
-
-
-    Mat sat = (max(max(channels[0],channels[1]),channels[2]) - min(min(channels[0],channels[1]),channels[2]))/max(max(channels[0],channels[1]),channels[2]);
-
-
-    minMaxLoc( invR, &minValR, &maxValR, &minLoc, &maxLoc );
+    minMaxLoc( channels[0], &minValR, &maxValR, &minLoc, &maxLoc );
     minMaxLoc( channels[1], &minValG, &maxValG, &minLoc, &maxLoc );
     minMaxLoc( channels[2], &minValB, &maxValB, &minLoc, &maxLoc );
-    minMaxLoc( sat, &minValSat, &maxValSat, &minLoc, &maxLoc );
     //cout << maxValR << " " << maxValG << " " << maxValB << endl;
 
-    priorValue =MIN(MIN(MIN(minValR,minValG),minValB),minValSat);
+    priorValue =MIN(MIN(minValR,minValG),minValB);
 
 
     return priorValue;
@@ -53,7 +47,7 @@ double RedChannelPrior::prior(Mat tile)
 }
 
 
-Mat RedChannelPrior::computePrior(Mat image, int patchsize)
+Mat ChiangPrior::computePrior(Mat image, int patchsize)
 {
 
 
@@ -107,7 +101,7 @@ Mat RedChannelPrior::computePrior(Mat image, int patchsize)
     return transmission;
 }
 
-Mat RedChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
+Mat ChiangPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
 {
     //[y x ~] = size(I);
     //J = zeros(y, x);
@@ -119,7 +113,7 @@ Mat RedChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
 
     cout << sizeX << endl;
     cout << sizeY << endl;
-    Mat transmission(sizeY,sizeX,CV_64F);
+    Mat transmission(sizeY,sizeX,CV_32FC3);
 
 
     cout << image(Range(sizeY-1,sizeY-1),Range(sizeX-1,sizeX-1)) << endl;
@@ -135,18 +129,28 @@ Mat RedChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
             //cout << i << " " << j << endl;
             vector<Mat> tChannels;
             split(tile,tChannels);
-            tChannels[0] = tChannels[0]/(1-veil[0]);
+            tChannels[0] = tChannels[0]/veil[0];
             tChannels[1] = tChannels[1]/veil[1];
             tChannels[2] = tChannels[2]/veil[2];
             merge(tChannels,tile);
             double priorValue = 1- prior(tile);
+
+            priorValue = -log(priorValue);
+            Vec3f priorRGB(pow(Nrer[0],priorValue),pow(Nrer[1],priorValue),pow(Nrer[2],priorValue));
+
+
+
+
+
             //cout << tile.rows << " " << tile.cols << endl;
             //cout << i << " " << j << endl;
             //cout << transmission.rows << " " <<  transmission.cols << endl;
             //cout << Rect(i,j, tile.rows ,tile.cols) << endl;
              // Yes, the rectangle is inverted with matrix when you access
            // Mat tileCopy = transmission(Rect(j,i, tile.cols ,tile.rows));
-            transmission.at<double>(i,j) =  priorValue;
+            transmission.at<Vec3f>(i,j) = priorRGB;
+
+
             //cout <<  tileCopy.rows << " " << tileCopy.cols << endl;
             //tileCopy =  Mat( tile.rows,tile.cols, CV_64F, cvScalar(priorValue));
             //tileCopy.copyTo(transmission(Rect(j,i, tile.cols ,tile.rows)));
@@ -164,4 +168,124 @@ Mat RedChannelPrior::computeTransmission(Mat image, int patchsize, Vec3f veil)
 return transmission;
 
 }
+
+
+double ChiangPrior::findDepth(Vec3f airlight,Vec3f ambientlight)
+{
+
+    double  minDistance = 100000;
+
+    double depth =0;
+
+    for (int j=0; j<100000; j++){
+        double value  = double(j)/1000;
+        double distance = 0;
+        for (int i=0;i<3;i++){
+            distance += pow(ambientlight[i] - airlight[i]*pow(Nrer[i],value),2);
+        }
+
+        if (distance < minDistance){
+            minDistance = distance;
+            depth = value;
+        }
+
+    }
+
+
+        return depth;
+
+
+
+
+}
+
+Mat ChiangPrior::generateDepthImage(Mat image, Mat trans)
+{
+    ColorConstancy cc(3);
+
+
+    /// set transmission
+
+    Mat topImage = image(Rect(0,0,image.cols,int(image.rows/2)));
+    Mat bottonImage = image(Rect(0,int(image.rows/2),image.cols,int(image.rows/2)));
+
+    Mat topTrans = trans(Rect(0,0,trans.cols,int(trans.rows/2)));
+    Mat bottonTrans = trans(Rect(0,int(trans.rows/2),trans.cols,int(trans.rows/2)));
+
+
+    cout  << "cut image  "  << endl;
+
+
+    Vec3f airlight(0.83,0.83,0.83);
+
+        cc.setDCP(topTrans);
+
+
+    Vec3f topAmbient = cc.getLightSource(topImage);
+    cc.setDCP(bottonTrans);
+
+
+    Vec3f bottonAmbient = cc.getLightSource(bottonImage);
+
+    Mat depthImage(image.rows,image.cols,CV_32FC3);
+
+
+    cout  << " go to find depth "  << endl;
+
+    cout << topAmbient << endl;
+
+    cout << bottonAmbient << endl;
+
+    double d1 = findDepth(airlight,topAmbient);
+
+
+    double d2 = findDepth(airlight,bottonAmbient);
+
+
+
+    double r = abs(d1 - d2);
+
+    cout << " d1 " << d1 << " d2 " << d2 << " r " << r <<  endl;
+
+
+    cout << " rows " << image.rows << " " << image.cols << endl;
+
+
+    for (int i=0; i < image.rows;i++){
+
+        double b =0;
+        double c = image.rows;
+
+        double  depth  = d1 + r*((i-b)/(c-b));
+
+        //cout << depth << endl;
+        // just to put on the image
+
+        Vec3f depthRGB(pow(Nrer[0],depth),pow(Nrer[1],depth),pow(Nrer[2],depth));
+
+        for (int j=0; j < image.cols;j++){
+
+
+
+            depthImage.at<Vec3f>(i,j) = depthRGB;
+
+
+        }
+
+
+    }
+
+    return depthImage;
+
+
+
+
+
+
+}
+
+
+
+
+
 

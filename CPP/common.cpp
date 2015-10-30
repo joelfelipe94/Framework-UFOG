@@ -209,7 +209,9 @@ void drawHist(Mat hist)
 void writeImage8U(const cv::Mat& image,const char* filename){
    cv::Mat imageCopy;
    imageCopy=image*255;
+
    imageCopy.convertTo(imageCopy,CV_8U);
+
    imwrite(filename,imageCopy);
 }
 

@@ -4,6 +4,7 @@
 #include "chromaticprior.h"
 #include "rangefiltprior.h"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "restoration.h"
 
 double SignalPrior::prior(Mat tile,Vec3f veil)
 {
@@ -25,13 +26,65 @@ Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3
         chromatic = chrom.computePrior(imageBilateral,patchsize,veil);
        // gradiente=guidedFilter(image,gradiente,60,0.01);
  //       writeImage8U(gradiente,"gradiente.png");
-        writeImage8U(rangeFilt,"rangeFilt.png");
-//        writeImage8U(desvio,"deviation.png");
-        writeImage8U(chromatic,"chromatic.png");
+        Restoration test;
+
+        Mat transRange =  test.refineTransmission(image.clone(),rangeFilt);
+        transRange.convertTo(transRange,CV_32F);
+        transRange = transRange/255;
+        Mat transChroma = test.refineTransmission(image.clone(),chromatic);
+        transChroma.convertTo(transChroma,CV_32F);
+        transChroma = transChroma/255;
+
+        //Mat transChroma = chromatic;
+        //Mat transRange = rangeFilt;
+
+        //Mat rangeTrans =  abs(transRange - transChroma)/2;
+
+        //Mat alpha = 0.7 - 0.546*rangeTrans;
+
+
+
+//        Restoration test;
+
+//        Mat transRange =  test.refineTransmission(image.clone(),rangeFilt);
+//        transRange.convertTo(transRange,CV_32F);
+//        transRange = transRange/255;
+//        Mat transChroma = test.refineTransmission(image.clone(),chromatic);
+//        transChroma.convertTo(transChroma,CV_32F);
+//        transChroma = transChroma/255;
+//        //cout << transChroma << endl;
+//        Mat signal  = max(chromatic,rangeFilt);
+
+//        Mat transFinal = test.refineTransmission(image.clone(),signal/255);
+//        transFinal.convertTo(transFinal,CV_32F);
+//        transFinal = transFinal/255;
+//        //cout << transFinal << endl;
+
+
+//        writeImage8U(transRange,"rangeFilt.png");
+////        writeImage8U(desvio,"deviation.png");
+//        writeImage8U(transChroma,"chromatic.png");
+
+//        writeImage8U(transFinal,"final.png");
+
+//        Mat DiffChroma, DiffRange;
+
+//        DiffRange = abs(transFinal - transRange);
+//        DiffChroma = abs(transFinal - transChroma);
+
+       // writeImage8U(transChroma,"chromatic.png");
+
+       // writeImage8U(transRange,"range.png");
+
+
 //        writeImage8U(max(chromatic,desvio),"transmissao.png");
 
+        // writeImage8U(alpha,"alpha.png");
 
-        return max(chromatic,rangeFilt);
+        //return transChroma.mul(alpha) + transRange.mul(1-alpha);
+
+
+        return max(transChroma,transRange);
         //return chromatic;
 
 }

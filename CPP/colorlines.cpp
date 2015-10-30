@@ -379,7 +379,7 @@ void ColorLines::patchLine(double lambdas[3], double p1[3], double p2[3], double
 }
 
 
-Vec3f ColorLines::findOrientation(Mat *m)
+Vec3f ColorLines::findOrientation(const Mat *m)
 {
 
 
@@ -840,7 +840,7 @@ double fitError(unsigned n, const double *ak, double *grad, void *entrada){
     return sumErr;
 }
 
-double ColorLines::findMagnitude(Mat *img, Mat *alpha_mat, double a[3])
+double ColorLines::findMagnitude(const Mat *img, Mat *alpha_mat, double a[3])
 {
     int w=img->cols;
     int h=img->rows;
@@ -869,12 +869,18 @@ double ColorLines::findMagnitude(Mat *img, Mat *alpha_mat, double a[3])
         }
     }
 
-    double withoutA[h*w*c];
+
+
+    double *withoutA = (double*)malloc(h*w*c*sizeof(double));
+
     double temp;
     for(int i=0; i<h; i++){
         for(int j=0; j<w; j++){
             for(int k=0; k<c; k++){
+
+
                 temp=(double(p_data[c*(w*i+j)+k])/255.0l)-alpha[w*i+j]*a[k];
+
                 if(temp>0){
                     withoutA[c*(w*i+j)+k]=temp;
                 } else{
@@ -883,6 +889,7 @@ double ColorLines::findMagnitude(Mat *img, Mat *alpha_mat, double a[3])
             }
         }
     }
+
 
     double *gray=(double*)malloc(w*h*sizeof(double));
     double initMag=0.5;
@@ -904,6 +911,7 @@ double ColorLines::findMagnitude(Mat *img, Mat *alpha_mat, double a[3])
             }
         }
     }
+
 
     double *transmission=(double*)malloc(w*h*sizeof(double));
     for(int i=0; i<w*h; i++){

@@ -22,7 +22,7 @@ void ColorConstancy::setTrans(Mat transmission)
 }
 
 
-Vec3f ColorConstancy::shadesOfGray(Mat image, int mikownsky)
+Vec3f ColorConstancy::shadesOfGray(const Mat& image, int mikownsky)
 {
 
     /// sum  all the image pixels
@@ -62,15 +62,17 @@ Vec3f ColorConstancy::shadesOfGray(Mat image, int mikownsky)
 
 }
 
-Vec3f ColorConstancy::colorLines(Mat image)
+Vec3f ColorConstancy::colorLines(const Mat& image)
 {
 
     ColorLines cl;
+
     Vec3f ori = cl.findOrientation(&image);
     cout << "ori" << endl;
     cout << ori << endl;
     double a[3]={ori[0],ori[1],ori[2]};
 
+    //cout << image << endl;
     double  mag =  cl.findMagnitude(&image,&trans,a);
     cout << mag << endl;
 
@@ -79,7 +81,34 @@ Vec3f ColorConstancy::colorLines(Mat image)
 
 }
 
-Vec3f ColorConstancy::DCPveil(Mat image, Mat dcpImage)
+Vec3f ColorConstancy::maxRedChannel(const Mat &image)
+{
+
+    double minValR;
+
+
+    Point minLoc;
+    Point maxLoc;
+    vector<Mat> channels;
+
+
+
+    split(image,channels);
+
+
+
+
+
+
+    minMaxLoc( 1- channels[0], &minValR, &minValR, &minLoc, &maxLoc );
+
+    //cout << maxValR << " " << maxValG << " " << maxValB << endl;
+
+    return image.at<Vec3f>(maxLoc);
+
+}
+
+Vec3f ColorConstancy::DCPveil(const Mat& image, Mat dcpImage)
 {
 
     Mat dst;
@@ -130,7 +159,7 @@ Vec3f ColorConstancy::DCPveil(Mat image, Mat dcpImage)
 
 }
 
-Vec3f ColorConstancy::getLightSource(Mat image)
+Vec3f ColorConstancy::getLightSource(const Mat& image)
 {
 
     switch(method){
@@ -160,6 +189,11 @@ Vec3f ColorConstancy::getLightSource(Mat image)
         case 4:
 
             return colorLines(image);
+
+        break;
+        case 5:
+
+        return maxRedChannel(image);
 
         break;
 

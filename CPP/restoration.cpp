@@ -12,17 +12,27 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
     finalchannels.resize(3);
     split(Image,channels);
 
-    transmission = max(transmission,0.25);
 
-    transmission = min(transmission,0.95);
+    Vec3f minTrans;
+
+
+    minTrans[0] = 0.1;
+    minTrans[1] = 0.1;
+    minTrans[2] = 0.1;
 
     for (int i=0;i<3;i++){
 
         Mat B = Veil[i]*transmission;
+
+        B = max(B,minTrans[i]);
+
+        B = min(B,0.95);
+
+
         Mat A = channels[i] -Veil[i] + B;
 
-        A = max(0,A);
-        A = min(1,A);
+        //A = max(0,A);
+        //A = min(1,A);
 
         Mat C = A/(2*B);
 

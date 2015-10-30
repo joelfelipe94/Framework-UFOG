@@ -1,4 +1,3 @@
-
 #include "common.h"
 #include "l0smoothing.h"
 #include "signalprior.h"
@@ -642,4 +641,3 @@ int main(int argc, char* argv[])
     return 0;
 
 }
-
