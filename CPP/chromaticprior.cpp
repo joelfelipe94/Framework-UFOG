@@ -24,6 +24,10 @@ double ChromaticPrior::prior(Mat tile,Vec3f veil)
       // cout << channels[0] << endl;
 
 
+    // se o channel é maior
+
+
+
     minMaxLoc( channels[0], &minVal, &maxValR, &minLoc, &maxLoc );
     minMaxLoc( channels[1], &minVal, &maxValG, &minLoc, &maxLoc );
     minMaxLoc( channels[2], &minVal, &maxValB, &minLoc, &maxLoc );

@@ -9,6 +9,7 @@
 #include "dcpgb.h"
 #include "colorlines.h"
 #include "chromaticprior.h"
+#include "redchannelprior.h"
 
 Mat getHistSP(char * imageName){
 
@@ -72,7 +73,7 @@ Mat getHistCP(char * imageName){
 
 // For now we are using just an image after u can put the folder to process.
 
-Mat image;
+Mat image,image_out;
 
 cout << imageName << endl;
 
@@ -83,27 +84,31 @@ image = fitSize( image,1024);
 //cout << image << endl;
 
 
-ChromaticPrior sp;
+SignalPrior sp;
 
 //image = filter.doFilter(image);
 //Mat imageR,imageG,imageB;
 ColorConstancy cp(2);
 
 
+
 const double sigmaColor = 100.0;
     const double sigmaSpace = 10.0;
-    cvtColor(image, image, CV_BGR2Lab);
+    cvtColor(image, image_out, CV_BGR2Lab);
     vector<Mat> channels;
-split(image,channels);
+split(image_out,channels);
 cv_extend::bilateralFilter(channels[0], channels[0], sigmaColor, sigmaSpace);
 
-merge(channels,image);
-cvtColor(image, image, CV_Lab2RGB);
+merge(channels,image_out);
+cvtColor(image_out, image_out, CV_Lab2RGB);
+ cvtColor(image, image, CV_BGR2RGB);
+
+
 Vec3f veil = cp.getLightSource(image);
 cout << veil << endl;
 
 
-Mat transmission = sp.computePrior(image,15,veil);
+Mat transmission = sp.computePrior(image_out,image,15,veil);
 
 
 cout << " the end " << endl;
@@ -325,10 +330,6 @@ return transmission;
 
 
 Mat restoreSP(char * imageName){
-
-
-
-
     // For now we are using just an image after u can put the folder to process.
 
         Mat image, image_out;
@@ -338,7 +339,9 @@ Mat restoreSP(char * imageName){
         image = imread(imageName, CV_LOAD_IMAGE_COLOR);
         image.convertTo(image, CV_32FC3);
         image = image/255;
-        image = fitSize( image,403);
+        //image = fitSize( image,600);
+        Rect ROI(7,7,image.cols-14,image.rows-14);
+        copyMakeBorder(image, image, 7, 7, 7, 7, BORDER_REPLICATE);
         //cout << image << endl;
 
 
@@ -348,12 +351,10 @@ Mat restoreSP(char * imageName){
         //image = filter.doFilter(image);
         //Mat imageR,imageG,imageB;
         ColorConstancy cp(2);
-
-
         const double sigmaColor = 100.0;
-            const double sigmaSpace = 10.0;
-            cvtColor(image, image_out, CV_BGR2Lab);
-            vector<Mat> channels;
+        const double sigmaSpace = 10.0;
+        cvtColor(image, image_out, CV_BGR2Lab);
+        vector<Mat> channels;
         split(image_out,channels);
         cv_extend::bilateralFilter(channels[0], channels[0], sigmaColor, sigmaSpace);
 
@@ -369,6 +370,7 @@ Mat restoreSP(char * imageName){
         //veil[2] = 127.0/255.0;
 
         Mat transmission = sp.computePrior(image_out,image,7,veil);
+        writeToColorMap(transmission(ROI) ,"colorMap.png");
 
       //  ColorConstancy cp_true(4);
 
@@ -390,14 +392,14 @@ Mat restoreSP(char * imageName){
 
 
 
-        writeImage8U(transmission,strcat(imageName,"Transmission.png"));
-        Restoration restore;
-        transmission = restore.refineTransmission(image,transmission);
+//        writeImage8U(transmission,strcat(imageName,"Transmission.png"));
+          Restoration restore;
+//        transmission = restore.refineTransmission(image,transmission);
 
 
-        transmission.convertTo(transmission,CV_32F);
-        transmission = transmission/255;
-        writeImage8U(transmission,strcat(imageName,"TransmissionFinal.png"));
+//        transmission.convertTo(transmission,CV_32F);
+//        transmission = transmission/255;
+//        writeImage8U(transmission,strcat(imageName,"TransmissionFinal.png"));
 
         cout << " the end " << endl;
         //Mat tImage = transmission*255;
@@ -410,9 +412,9 @@ Mat restoreSP(char * imageName){
         //
         //cout << image << endl;
         cout<<"aqui"<<endl;
-        cvtColor(image, image, CV_BGR2RGB);
-        return restore.restoreImageVeil(image/255, transmission,  veil);
-        cout<<"aqui2"<<endl;
+
+        image=restore.restoreImageVeil(image, transmission,  veil);
+        return image(ROI);
 
         //cout << hist << endl;
 
@@ -433,17 +435,18 @@ Mat restoreDCP(char * imageName){
     cout << imageName << endl;
 
     image = imread(imageName, CV_LOAD_IMAGE_COLOR);
+    image = fitSize( image,600);
     image.convertTo(image, CV_32FC3);
     image = image/255;
     //image = fitSize( image,500);
     //cout << image << endl;
 
 
-    DCPGB sp;
+    DarkChannelPrior sp;
 
     //image = filter.doFilter(image);
     //Mat imageR,imageG,imageB;
-    ColorConstancy cp(2);
+    ColorConstancy cp(3);
 
 
     const double sigmaColor = 100.0;
@@ -462,7 +465,7 @@ Mat restoreDCP(char * imageName){
     Vec3f veil = cp.getLightSource(image);
     cout << veil << endl;
     //cv::resize(image,image,Size(),0.5,0.5);
-    Mat transmission = sp.computeTransmission(image,15,veil);
+    Mat transmission = sp.computeTransmission(image,7,veil);
 
 
 
@@ -473,8 +476,8 @@ Mat restoreDCP(char * imageName){
     transmission.convertTo(transmission,CV_32F);
     transmission = transmission/255;
     cout << " the end " << endl;
-    writeToColorMap(transmission ,"colorMap.png");
-    writeImage8U(transmission,strcat(imageName,"TransmissionDCP.png"));
+    //writeToColorMap(transmission ,"colorMap.png");
+//    writeImage8U(transmission,strcat(imageName,"TransmissionDCP.png"));
 
     //cout << transmission << endl;
     //transmission = transmission;
@@ -495,6 +498,83 @@ Mat restoreDCP(char * imageName){
 
 
 }
+
+Mat restoreRed(char * imageName){
+
+
+// For now we are using just an image after u can put the folder to process.
+
+    Mat image, image_out;
+
+    cout << imageName << endl;
+
+    image = imread(imageName, CV_LOAD_IMAGE_COLOR);
+    image = fitSize( image,600);
+    image.convertTo(image, CV_32FC3);
+    image = image/255;
+    //image = fitSize( image,500);
+    //cout << image << endl;
+
+
+    RedChannelPrior sp;
+
+    //image = filter.doFilter(image);
+    //Mat imageR,imageG,imageB;
+    ColorConstancy cp(5);
+
+
+    const double sigmaColor = 100.0;
+    const double sigmaSpace = 10.0;
+    cvtColor(image, image_out, CV_BGR2Lab);
+    vector<Mat> channels;
+    split(image_out,channels);
+    cv_extend::bilateralFilter(channels[0], channels[0], sigmaColor, sigmaSpace);
+
+    merge(channels,image_out);
+    cvtColor(image_out, image_out, CV_Lab2RGB);
+    cvtColor(image, image, CV_BGR2RGB);
+
+
+    cp.setDCP(sp.computePrior(image,15));
+    Vec3f veil = cp.getLightSource(image);
+    cout << veil << endl;
+    //cv::resize(image,image,Size(),0.5,0.5);
+    Mat transmission = sp.computeTransmission(image,7,veil);
+
+
+
+    Restoration restore;
+    //writeImage8U(transmission,strcat(imageName,"TransmissionBefore.png"));
+    //cout << transmission << endl;
+    transmission = restore.refineTransmission(image,transmission);
+    transmission.convertTo(transmission,CV_32F);
+    transmission = transmission/255;
+    cout << " the end " << endl;
+    //writeToColorMap(transmission ,"colorMap.png");
+//    writeImage8U(transmission,strcat(imageName,"TransmissionDCP.png"));
+
+    //cout << transmission << endl;
+    //transmission = transmission;
+    //transmission = transmission*255;
+
+     //cout << transmission << endl;
+
+    //transmission.convertTo(transmission,CV_8U);
+
+
+    //cout << image << endl;
+    cvtColor(image, image, CV_BGR2RGB);
+    return restore.restoreImageRedChannel(image/255, transmission,  veil);
+
+
+    //cout << hist << endl;
+
+
+
+}
+
+
+
 
 
 int runGroundTruthTest(char * imagesPath, char * groundTruth)
@@ -563,7 +643,7 @@ int runGroundTruthTest(char * imagesPath, char * groundTruth)
 
 }
 
-int runDataset(char * datasetPath)
+int runDatasetHist(char * datasetPath)
 {
 
     DIR * dirp;
@@ -572,14 +652,14 @@ int runDataset(char * datasetPath)
             return (1);
 
     dirent * dp;
-    dp = readdir(dirp);
-    dp = readdir(dirp);
+
     int N =2000;
     int count = 0;
     Mat averageHist = Mat::zeros(256,1,CV_32F);
     Mat hist;
     while ((dp = readdir(dirp)) != NULL && count < N) {
-
+    if(string(dp->d_name)==".." ||string(dp->d_name)== ".")
+        continue;
 
         cout << dp->d_name << endl;
         cout << count << endl;
@@ -597,16 +677,38 @@ int runDataset(char * datasetPath)
     cout << averageHist << endl;
     writeMatToFile(averageHist,"hist.txt");
     drawHist(averageHist);
-
-
-
-
-
     return 0;
-
-
 }
 
+
+int runDatasetRestore(char * datasetPath)
+{
+
+    DIR * dirp;
+    dirp = opendir(datasetPath);
+    if (dirp == NULL)
+            return (1);
+
+    dirent * dp;
+
+    int N =2000;
+    int count = 0;
+    Mat resp;
+    while ((dp = readdir(dirp)) != NULL && count < N) {
+    if(string(dp->d_name)==".." ||string(dp->d_name)== ".")
+        continue;
+
+        cout << dp->d_name << endl;
+        cout << count << endl;
+        char fullPath[256];
+        sprintf(fullPath,"%s/%s",datasetPath,dp->d_name);
+        resp = restoreRed(fullPath);
+        sprintf(fullPath,"%s/r%s",datasetPath,dp->d_name);
+        cvtColor(resp,resp,CV_RGB2BGR);
+        writeImage8U(resp,fullPath);
+   }
+    return 0;
+}
 
 
 
@@ -620,8 +722,8 @@ int main(int argc, char* argv[])
        printf("Usage: %s image annotations output\n", argv[0] );
        return 1;
     }
-    //int output;
-    //output = runGroundTruthTest(argv[1],argv[2]);
+    int output;
+//    output = runDatasetRestore(argv[1]);
     //imwrite("hist.png",hist);
 
     //hist = getHistSTD(argv[1]);
@@ -630,7 +732,7 @@ int main(int argc, char* argv[])
     //Vec3f ori = cl.findOrientation();
     Mat final;
     final = restoreSP(argv[1]);
-    //cout << final << endl;
+//    //cout << final << endl;
     final = final*255;
     final.convertTo(final,CV_8UC3);
     cvtColor(final,final,CV_RGB2BGR);

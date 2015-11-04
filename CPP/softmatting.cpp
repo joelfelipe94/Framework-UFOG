@@ -150,6 +150,9 @@ void init_vars(int img_w, int img_h){
 }
 
 void free_vars(){
+    free(h_row_inds);
+    free(h_col_inds);
+    free(h_vals);
     free(img);
     free(img_scr);
 }

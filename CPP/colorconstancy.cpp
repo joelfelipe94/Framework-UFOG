@@ -119,8 +119,9 @@ Vec3f ColorConstancy::DCPveil(const Mat& image, Mat dcpImage)
 
 
 
-    sortIdx(dcpImage, dst, CV_SORT_EVERY_ROW + CV_SORT_ASCENDING);
+    sortIdx(dcpImage, dst, CV_SORT_EVERY_ROW + CV_SORT_DESCENDING);
     float maxValue = 0;
+
     vector<Mat> channels;
     split(image,channels);
     Vec3f veil;
@@ -131,7 +132,7 @@ Vec3f ColorConstancy::DCPveil(const Mat& image, Mat dcpImage)
     channels[1] = channels[1].reshape(0,1);
     channels[2] = channels[2].reshape(0,1);
 
-
+    //cout << dst << endl;
     //cout << channels[0].rows  << " " << channels[0].cols << endl;
     /// Take the 10% smaller
     for (int i=0;i<int((image.rows*image.cols)/10);i++){
@@ -142,14 +143,14 @@ Vec3f ColorConstancy::DCPveil(const Mat& image, Mat dcpImage)
         intensity = intensity +channels[1].at<float>(0,dst.at<int>(0,i));
         intensity = intensity +channels[2].at<float>(0,dst.at<int>(0,i));
 
-
-        if (maxValue < intensity){
+        //cout << intensity << endl;
+        if (maxValue < intensity/3){
             veil[0] = channels[0].at<float>(0,dst.at<int>(0,i));
 
             veil[1] = channels[1].at<float>(0,dst.at<int>(0,i));
 
             veil[2] = channels[2].at<float>(0,dst.at<int>(0,i));
-            maxValue = intensity;
+            maxValue = intensity/3;
         }
 
     }

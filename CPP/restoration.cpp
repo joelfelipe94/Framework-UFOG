@@ -16,9 +16,9 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
     Vec3f minTrans;
 
 
-    minTrans[0] = 0.1;
-    minTrans[1] = 0.1;
-    minTrans[2] = 0.1;
+    minTrans[0] = 0.2;
+    minTrans[1] = 0.2;
+    minTrans[2] = 0.2;
 
     for (int i=0;i<3;i++){
 
@@ -26,19 +26,17 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
 
         B = max(B,minTrans[i]);
 
-        B = min(B,0.95);
+
 
 
         Mat A = channels[i] -Veil[i] + B;
 
-        //A = max(0,A);
-        //A = min(1,A);
 
-        Mat C = A/(2*B);
+        Mat C = A/(1.7*B);
 
 
 
-        finalchannels[i] = C;
+        finalchannels[i] = max(min(C,1),0);
     }
 
     merge(finalchannels,finalImage);
@@ -46,6 +44,10 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
 
 
 }
+
+
+
+
 Mat Restoration::restoreImageClassic(Mat Image,Mat transmission, Vec3f Veil)
 {
     Mat finalImage;
@@ -53,7 +55,7 @@ Mat Restoration::restoreImageClassic(Mat Image,Mat transmission, Vec3f Veil)
     finalchannels.resize(3);
     split(Image,channels);
 
-    transmission = max(transmission,0.25);
+    transmission = max(transmission,0.10);
 
     transmission = min(transmission,0.95);
 
@@ -74,6 +76,38 @@ Mat Restoration::restoreImageClassic(Mat Image,Mat transmission, Vec3f Veil)
 
 
 }
+
+Mat Restoration::restoreImageRedChannel(Mat Image,Mat transmission, Vec3f Veil)
+{
+    Mat finalImage;
+    vector<Mat> channels,finalchannels;
+    finalchannels.resize(3);
+    split(Image,channels);
+
+    transmission = max(transmission,0.10);
+
+    transmission = min(transmission,0.95);
+    Vec3f p;
+    p[0]=1-Veil[0];
+    p[1]=1-Veil[1];
+    p[2]=1-Veil[2];
+    for (int i=0;i<3;i++){
+        Mat A = channels[i] -Veil[i];
+
+        Mat B = transmission;
+        Mat C = A/B;
+        /// C is between -1 and 0
+        C = max(-Veil[i],C);
+        C = min(1-Veil[i],C);
+        finalchannels[i] = C+Veil[i]*p[i];
+    }
+
+    merge(finalchannels,finalImage);
+    return finalImage;
+
+
+}
+
 
 Mat Restoration::refineTransmission(Mat Image, Mat transmission)
 {
