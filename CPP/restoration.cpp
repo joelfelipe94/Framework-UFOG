@@ -16,9 +16,9 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
     Vec3f minTrans;
 
 
-    minTrans[0] = 0.2;
-    minTrans[1] = 0.2;
-    minTrans[2] = 0.2;
+    minTrans[0] = 0.25;
+    minTrans[1] = 0.25;
+    minTrans[2] = 0.25;
 
     for (int i=0;i<3;i++){
 
@@ -32,7 +32,7 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
         Mat A = channels[i] -Veil[i] + B;
 
 
-        Mat C = A/(1.7*B);
+        Mat C = A/(2*B);
 
 
 

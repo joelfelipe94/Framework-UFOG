@@ -22,24 +22,35 @@ Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3
 //        desvio=stand.computePrior(image,patchsize);
 //        gradiente=grad.computePrior(image,patchsize);
         rangeFilt=range.computePrior(image,patchsize,veil);
-        Rect ROI(patchsize,patchsize,rangeFilt.cols-2*patchsize,rangeFilt.rows-2*patchsize);
-        writeImage8U(rangeFilt(ROI),"babacaRangeFilt.png");
+        //Rect ROI(patchsize,patchsize,rangeFilt.cols-2*patchsize,rangeFilt.rows-2*patchsize);
+        writeImage8U(rangeFilt,"babacaRangeFilt.png");
         //blur(rangeFilt,rangeFilt,Size(15,15));
         chromatic = chrom.computePrior(imageBilateral,patchsize,veil);
-        Rect ROe(patchsize,patchsize,chromatic.cols-2*patchsize,chromatic.rows-2*patchsize);
-        writeImage8U(chromatic(ROe),"babacaChroma.png");
+        //Rect ROe(patchsize,patchsize,chromatic.cols-2*patchsize,chromatic.rows-2*patchsize);
+        writeImage8U(chromatic,"babacaChroma.png");
        // gradiente=guidedFilter(image,gradiente,60,0.01);
  //       writeImage8U(gradiente,"gradiente.png");
         Restoration test;
 
         Mat transRange =  test.refineTransmission(image.clone(),rangeFilt);
-        imwrite("babacaRangeFiltSoft.png",transRange(ROI));
+        imwrite("babacaRangeFiltSoft.png",transRange);
+
         transRange.convertTo(transRange,CV_32F);
         transRange = transRange/255;
+
+        rangeFilt.convertTo(rangeFilt,CV_32F);
+        rangeFilt = rangeFilt/255;
+        writeToColorMap(rangeFilt ,"colorMaprange.png");
+
         Mat transChroma = test.refineTransmission(image.clone(),chromatic);
-        imwrite("babacaChromaSoft.png",transChroma(ROe));
+        imwrite("babacaChromaSoft.png",transChroma);
+
         transChroma.convertTo(transChroma,CV_32F);
         transChroma = transChroma/255;
+
+        chromatic.convertTo(chromatic,CV_32F);
+        chromatic = chromatic/255;
+        writeToColorMap(chromatic ,"colorMapChroma.png");
 
 //        Mat transChroma = chromatic;
 //        Mat transRange = rangeFilt;
@@ -99,9 +110,9 @@ Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3
 
         mask = (transRange > transChroma)/255;
 
-        cout << mask << endl;
+        //cout << mask << endl;
 
-        cout << mask.type() << endl;
+        //cout << mask.type() << endl;
           mask.convertTo(mask,CV_32F);
 
         maxRange = transRange.mul(mask);

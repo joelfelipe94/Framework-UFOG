@@ -329,19 +329,13 @@ return transmission;
 
 
 
-Mat restoreSP(char * imageName){
-    // For now we are using just an image after u can put the folder to process.
+Mat restoreSP(Mat image)
+{
 
-        Mat image, image_out;
-
-        cout << imageName << endl;
-
-        image = imread(imageName, CV_LOAD_IMAGE_COLOR);
-        image.convertTo(image, CV_32FC3);
-        image = image/255;
-        //image = fitSize( image,600);
-        Rect ROI(7,7,image.cols-14,image.rows-14);
-        copyMakeBorder(image, image, 7, 7, 7, 7, BORDER_REPLICATE);
+        Mat image_out;
+        image = fitSize( image,1024);
+        //Rect ROI(7,7,image.cols-14,image.rows-14);
+        //copyMakeBorder(image, image, 7, 7, 7, 7, BORDER_REPLICATE);
         //cout << image << endl;
 
 
@@ -370,7 +364,7 @@ Mat restoreSP(char * imageName){
         //veil[2] = 127.0/255.0;
 
         Mat transmission = sp.computePrior(image_out,image,7,veil);
-        writeToColorMap(transmission(ROI) ,"colorMap.png");
+        writeToColorMap(transmission ,"colorMap.png");
 
       //  ColorConstancy cp_true(4);
 
@@ -414,13 +408,87 @@ Mat restoreSP(char * imageName){
         cout<<"aqui"<<endl;
 
         image=restore.restoreImageVeil(image, transmission,  veil);
-        return image(ROI);
+        return image;
 
+
+
+}
+Mat restoreSPfile(char * imageName)
+{
+    // For now we are using just an image after u can put the folder to process.
+
+        Mat image, image_out;
+
+        cout << imageName << endl;
+
+        image = imread(imageName, CV_LOAD_IMAGE_COLOR);
+        image.convertTo(image, CV_32FC3);
+        image = image/255;
+
+
+        return restoreSP(image);
         //cout << hist << endl;
 
+}
+
+
+int restoreVideoSP(char * imageName)
+{
+    cv::VideoCapture cap(imageName);
+    if(!cap.isOpened()) {
+        std::cout << "Unable to open the camera\n";
+        std::exit(-1);
+    }
+
+    // Get the width/height and the FPS of the vide
+    int width = static_cast<int>(cap.get(CV_CAP_PROP_FRAME_WIDTH));
+    int height = static_cast<int>(cap.get(CV_CAP_PROP_FRAME_HEIGHT));
+    double FPS = cap.get(CV_CAP_PROP_FPS);
+
+    // Open a video file for writing (the MP4V codec works on OS X and Windows)
+    cv::VideoWriter out("output.mov", CV_FOURCC('m','p', '4', 'v'), FPS, cv::Size(1024, 576));
+    if(!out.isOpened()) {
+        std::cout <<"Error! Unable to open video file for output." << std::endl;
+        std::exit(-1);
+    }
+    cout << " fps " << FPS << endl;
+    cv::Mat image;
+
+    int frames =130;
+    int count =0;
+    while(count < frames) {
+        cap >> image;
+        if(image.empty()) {
+            std::cout << "Can't read frames from your camera\n";
+            break;
+        }
+
+        // Copy the middle panel from the image and convert it to gray
+        //Mat top = image(cv::Rect(0, image.rows/2, image.cols, image.rows/2));
+        //cout << top;
+
+        image.convertTo(image, CV_32FC3);
+        image = image/255;
+
+        Mat rest = restoreSP(image);
+
+
+        rest = rest*255;
+            rest.convertTo(rest,CV_8UC3);
+            cvtColor(rest,rest,CV_RGB2BGR);
+        imwrite("rest.png",rest);
+
+        //cout <<" Size out " << cv::Size(width, height/2) << endl;
+
+        // Save frame to video
+        out << rest;
 
 
 
+        // Stop the camera if the user presses the "ESC" key
+        count++;
+    }
+    return 0;
 
 }
 
@@ -730,13 +798,17 @@ int main(int argc, char* argv[])
 
     //ColorLines cl;
     //Vec3f ori = cl.findOrientation();
-    Mat final;
-    final = restoreSP(argv[1]);
-//    //cout << final << endl;
-    final = final*255;
-    final.convertTo(final,CV_8UC3);
-    cvtColor(final,final,CV_RGB2BGR);
-    imwrite("rest.png",final);
+
+
+    restoreVideoSP(argv[1]);
+
+//    Mat final;
+//    final = restoreSPfile(argv[1]);
+////    //cout << final << endl;
+//    final = final*255;
+//    final.convertTo(final,CV_8UC3);
+//    cvtColor(final,final,CV_RGB2BGR);
+//    imwrite("rest.png",final);
     //hist = getHistSP(argv[1]);
 
 
