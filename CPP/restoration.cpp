@@ -16,27 +16,40 @@ Mat Restoration::restoreImageVeil(Mat Image,Mat transmission, Vec3f Veil)
     Vec3f minTrans;
 
 
-    minTrans[0] = 0.25;
-    minTrans[1] = 0.25;
-    minTrans[2] = 0.25;
-
+    minTrans[0] = 0.1;
+    minTrans[1] = 0.1;
+    minTrans[2] = 0.1;
     for (int i=0;i<3;i++){
 
-        Mat B = Veil[i]*transmission;
+        Mat I_lambda= channels[i];
+        double A_lambda= Veil[i];
+        Mat t= transmission;
+        Mat A_lambdat=A_lambda*t;
+        double t0=minTrans[i];
+        Mat M;
+        M=max((I_lambda-A_lambda+A_lambdat),0)/(max(t0,A_lambdat));
 
-        B = max(B,minTrans[i]);
+//        Mat B = Veil[i]*transmission;
+
+//        B = max(B,minTrans[i]);
+
+//        Mat A = channels[i] -Veil[i] + B;
+//        int temp;
+        double mini, maxi;
+//        double miniLoc,maxiLoc;
+
+//        Mat C = A/B; // se o maximo dessa operação passar de 1 ela deve ser normalizada para um
 
 
 
+        minMaxLoc(M, &mini, &maxi);
+//        cout<<endl<<"*****"<<mini<<" "<<maxi;
+//        C=(C-mini)/(maxi-mini);
+        cout<<maxi<<" "<<mini<<endl;
+        if((maxi)>1)
+            M=M/maxi;
 
-        Mat A = channels[i] -Veil[i] + B;
-
-
-        Mat C = A/(2*B);
-
-
-
-        finalchannels[i] = max(min(C,1),0);
+        finalchannels[i] = max(min(M,1),0);
     }
 
     merge(finalchannels,finalImage);

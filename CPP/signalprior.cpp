@@ -130,7 +130,6 @@ Mat SignalPrior::computePrior(Mat imageBilateral, Mat image, int patchsize, Vec3
 
 
 
-
         channels[1]=maxRange;
         channels[0]=maxChroma;
 

@@ -23,7 +23,7 @@ cout << imageName << endl;
 image = imread(imageName, CV_LOAD_IMAGE_COLOR);
 image.convertTo(image, CV_32FC3);
 image = image/255;
-image = fitSize( image,1024);
+image = fitSize( image,512);
 //cout << image << endl;
 
 
@@ -333,7 +333,7 @@ Mat restoreSP(Mat image)
 {
 
         Mat image_out;
-        image = fitSize( image,1024);
+        image = fitSize( image,512);
         //Rect ROI(7,7,image.cols-14,image.rows-14);
         //copyMakeBorder(image, image, 7, 7, 7, 7, BORDER_REPLICATE);
         //cout << image << endl;
@@ -791,7 +791,7 @@ int main(int argc, char* argv[])
        return 1;
     }
     int output;
-//    output = runDatasetRestore(argv[1]);
+    //output = runDatasetRestore(argv[1]);
     //imwrite("hist.png",hist);
 
     //hist = getHistSTD(argv[1]);
@@ -800,15 +800,15 @@ int main(int argc, char* argv[])
     //Vec3f ori = cl.findOrientation();
 
 
-    restoreVideoSP(argv[1]);
+    //restoreVideoSP(argv[1]);
 
-//    Mat final;
-//    final = restoreSPfile(argv[1]);
-////    //cout << final << endl;
-//    final = final*255;
-//    final.convertTo(final,CV_8UC3);
-//    cvtColor(final,final,CV_RGB2BGR);
-//    imwrite("rest.png",final);
+    Mat final;
+    final = restoreSPfile(argv[1]);
+//    //cout << final << endl;
+    final = final*255;
+    final.convertTo(final,CV_8UC3);
+    cvtColor(final,final,CV_RGB2BGR);
+    imwrite("rest.png",final);
     //hist = getHistSP(argv[1]);
 
 
